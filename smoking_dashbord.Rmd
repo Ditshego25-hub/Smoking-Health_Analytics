@@ -1,0 +1,116 @@
+---
+title: "Smoking & Health Insights"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    theme: readable
+    runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(plotly)
+library(DT)
+library(shiny)
+
+#Load dataset
+data <- read.csv("Desktop/Data Analysis_DS/smoking_health_data_final.csv")
+
+#Convert to factors if needed
+data$current_smoker <- as.factor(data$current_smoker)
+data$sex <- as.factor(data$sex)
+```
+
+### Smoking Overview
+
+```{r}
+#Proportion of smokers vs non-smokers
+table_smoke <- prop.table(table(data$current_smoker)) * 100
+datatable(as.data.frame(table_smoke),
+          colnames = c("Smoking Status","Percentage") ,
+options = list(dom = "t"))
+
+```
+
+### Age Distribution
+
+```{r}
+
+#Age histogram by smoking status
+plot_ly(data, x= ~age, color = ~current_smoker, type = "histogram") %>%
+  layout(title = "Age Distribution by Smoking Status", 
+         xaxis = list(title = "Age"),
+         yaxis = list(title = "Count"))
+```
+
+### Heart Rate Comparison
+
+```{r}
+
+# Heart rate by smoking status
+ggplot(data, aes(x = current_smoker, y = heart_rate, fill = current_smoker)) +
+  geom_boxplot() +
+  labs(title = "Heart Rate by Smoking Status", 
+       x = "Smoking Status",
+       y= "Heart Rate") +
+  theme_minimal()
+
+
+```
+
+### Cholesterol Levels
+
+```{r message=TRUE, warning=TRUE, paged.print=TRUE}
+# Summary: Mean cholesterol
+chol_summary <- data %>%
+  group_by(current_smoker) %>%
+  summarise(mean_chol = mean(chol, na.rm = TRUE))
+chol_summary
+
+```
+
+```{r}
+ #Boxplot: Cholesterol by smoking status
+ggplot(data, aes(x = current_smoker, y = chol, fill = current_smoker)) +
+  geom_boxplot() +
+  labs(title = "Cholesterol by Smoking Status",
+       x = "Smoking Status",
+       y = "Cholesterol") +
+  theme_minimal()
+```
+
+### Age and Smoking Status
+
+```{r}
+
+## Mean age by smoking status
+age_summary <- data %>%
+  group_by(current_smoker) %>%
+  summarise(mean_age = mean(age, na.rm = TRUE))
+age_summary
+
+```
+
+### Smoking by Sex
+
+```{r}
+
+# Bar chart: Proportion of smokers by sex
+ggplot(data, aes(x = sex, fill = current_smoker)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Sex", y = "Proportion", title = "Smoking Status by Sex") +
+  theme_minimal()
+```
+
+```{r}
+
+# Plotly: Stacked bar chart
+plot_ly(data, x = ~sex, color = ~current_smoker, type = 'bar') %>%
+  layout(barmode = "stack",
+         title = "Smoking by Sex",
+         xaxis = list(title = "Sex"),
+         yaxis = list(title = "Count"))
+```
